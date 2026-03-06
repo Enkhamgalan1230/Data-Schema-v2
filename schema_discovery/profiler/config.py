@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -15,28 +15,35 @@ class ProfilerConfig:
     memory_limit: str = "2GB"
     threads: int = 4
 
+    # Optional metrics
+    compute_sample_values: bool = True
+    compute_top1_ratio: bool = True
+    compute_length_stats: bool = False
+
     # Sampling and costs
     sample_values_n: int = 10
-
-    compute_top1_ratio: bool = True
-
-    # Only compute top1_ratio when approx_distinct <= this threshold
-    # Because top1_ratio is most useful for low-card columns anyway.
+    sample_max_approx_distinct: int = 100_000
     top1_max_approx_distinct: int = 50_000
 
-    # Uniqueness strategy
-    # If row count <= exact_unique_max_rows -> compute exact COUNT(DISTINCT)
-    # else use approx_count_distinct
-    exact_unique_max_rows: int = 200_000
-
-    # If you want to treat some string tokens as null
-    # Applied in SQL as NULLIF chains for VARCHAR-like cols
+    # Null token handling for text-like columns
     string_null_tokens: Sequence[str] = ("", "NULL", "null", "N/A", "na")
 
-    # If True, treat uniqueness only on non-null values when deciding is_unary_ucc
-    # In relational terms, nullable unique keys are allowed. Choose your policy.
-    ucc_ignore_nulls: bool = True
+    # Presentation safety
+    clamp_ratios: bool = True
 
-    compute_sample_values: bool = True
-
-    sample_max_approx_distinct: int = 100_000
+    """
+    cfg = ProfilerConfig(
+    duckdb_path=out_dir / "profile.duckdb",
+    temp_dir=out_dir / "tmp_duckdb",
+    memory_limit="2GB",
+    threads=4,
+    compute_sample_values=False,
+    compute_top1_ratio=True,
+    compute_length_stats=False,
+    sample_values_n=10,
+    sample_max_approx_distinct=100_000,
+    top1_max_approx_distinct=10_000,
+    string_null_tokens=("", "NULL", "null", "N/A", "na"),
+    clamp_ratios=True,
+)
+    """
